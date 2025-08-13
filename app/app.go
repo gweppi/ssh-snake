@@ -113,16 +113,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "up":
-			m.direction = up
+			if m.direction != down {
+				m.direction = up
+			}
 		case "down":
-			m.direction = down
+			if m.direction != up {
+				m.direction = down
+			}
 		case "left":
-			m.direction = left
+			if m.direction != right {
+				m.direction = left
+			}
 		case "right":
-			m.direction = right
+			if m.direction != left {
+				m.direction = right
+			}
 		}
 	case tickMsg:
 		prevPos := m.cursor.position()
+		m.cursor.move(m.direction)
 
 		// Head is on point, so up score and increase snake length
 		if m.pointPosition == m.cursor.position() {
@@ -137,7 +146,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.body = append(m.body, prevPos)
 		}
 
-		m.cursor.move(m.direction)
 		m.body.shift(prevPos)
 		return m, tick()
 	}

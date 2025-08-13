@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"slices"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,7 +19,7 @@ const (
 )
 
 const (
-	width  = 25
+	width  = 20
 	height = 10
 )
 
@@ -35,11 +36,13 @@ type tickMsg time.Time
 type cursor [2]iterator.Iterator[int]
 type direction int
 type position [2]int
+type body []position
 
 type model struct {
 	score         int
 	highscore     int
 	pointPosition position
+	body          body
 	cursor
 	direction
 }
@@ -65,6 +68,7 @@ func initialModel() model {
 		}},
 		direction:     down, // the default direction is down
 		pointPosition: randomPoint(),
+		body:          make([]position, 0),
 	}
 }
 
@@ -118,17 +122,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.direction = right
 		}
 	case tickMsg:
-		m.cursor.move(m.direction)
-		// Head is on point, so up score
+		prevPos := m.cursor.position()
+
+		// Head is on point, so up score and increase snake length
 		if m.pointPosition == m.cursor.position() {
 			m.score++
 			// Change point to other random point
 			m.pointPosition = randomPoint()
+
+			if m.score > m.highscore {
+				m.highscore++
+			}
+
+			m.body = append(m.body, prevPos)
 		}
+
+		m.cursor.move(m.direction)
+		m.body.shift(prevPos)
 		return m, tick()
 	}
 
 	return m, nil
+}
+
+func (b *body) shift(new position) {
+	length := len(*b)
+	if length != 0 {
+		keptValues := (*b)[:length-1]
+		*b = append(body{new}, keptValues...)
+	}
 }
 
 func (m model) View() string {
@@ -140,6 +162,8 @@ func (m model) View() string {
 				view += "o"
 			case (m.pointPosition[0] == column && m.pointPosition[1] == row):
 				view += "."
+			case (slices.Contains(m.body, position{column, row})):
+				view += "="
 			case (row == 0 || row == height-1):
 				view += "-"
 			case (column == 0 || column == width-1):

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -16,6 +17,11 @@ const (
 	left  = 3
 )
 
+const (
+	width  = 25
+	height = 10
+)
+
 func App() {
 	// Load terminal program with initial model
 	p := tea.NewProgram(initialModel())
@@ -28,10 +34,12 @@ func App() {
 type tickMsg time.Time
 type cursor [2]iterator.Iterator[int]
 type direction int
+type position [2]int
 
 type model struct {
-	width  int
-	height int
+	score         int
+	highscore     int
+	pointPosition position
 	cursor
 	direction
 }
@@ -50,29 +58,21 @@ func initialModel() model {
 	}
 
 	return model{
-		width:  width,
-		height: height,
 		cursor: cursor{{
 			List: legalHorizontalPositions,
 		}, {
 			List: legalVerticalPositions,
 		}},
-		direction: down, // the default direction is down
+		direction:     down, // the default direction is down
+		pointPosition: randomPoint(),
 	}
 }
 
-// func (c *cursor) move(d direction, width, height int) {
-// 	switch d {
-// 	case up:
-// 		*c = cursor{c[0], (c[1] - 1) % (width - 1)}
-// 	case down:
-// 		*c = cursor{c[0], c[1] + 1}
-// 	case right:
-// 		*c = cursor{c[0] + 1, c[1]}
-// 	case left:
-// 		*c = cursor{c[0] - 1, c[1]}
-// 	}
-// }
+func randomPoint() position {
+	x := rand.Intn(width-2) + 1
+	y := rand.Intn(height-2) + 1
+	return position{x, y}
+}
 
 func (c *cursor) move(d direction) {
 	switch d {
@@ -87,6 +87,10 @@ func (c *cursor) move(d direction) {
 	}
 }
 
+func (c *cursor) position() position {
+	return position{c[0].Current(), c[1].Current()}
+}
+
 func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
@@ -96,20 +100,6 @@ func tick() tea.Cmd {
 func (m model) Init() tea.Cmd {
 	return tick()
 }
-
-// func (m model) isLegalMove(d direction) bool {
-// 	switch d {
-// 	case up:
-// 		return m.cursor[1] > 1
-// 	case down:
-// 		return m.cursor[1] < m.height-2
-// 	case left:
-// 		return m.cursor[0] > 1
-// 	case right:
-// 		return m.cursor[0] < m.width-2
-// 	}
-// 	return false
-// }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -128,9 +118,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.direction = right
 		}
 	case tickMsg:
-		// if m.isLegalMove(m.direction) {
 		m.cursor.move(m.direction)
-		// }
+		// Head is on point, so up score
+		if m.pointPosition == m.cursor.position() {
+			m.score++
+			// Change point to other random point
+			m.pointPosition = randomPoint()
+		}
 		return m, tick()
 	}
 
@@ -139,23 +133,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	view := ""
-	for row := range m.height {
-		for column := range m.width {
+	for row := range height {
+		for column := range width {
 			switch true {
 			case (m.cursor[0].Current() == column && m.cursor[1].Current() == row):
 				view += "o"
-			case (row == 0 || row == m.height-1):
+			case (m.pointPosition[0] == column && m.pointPosition[1] == row):
+				view += "."
+			case (row == 0 || row == height-1):
 				view += "-"
-			case (column == 0 || column == m.width-1):
+			case (column == 0 || column == width-1):
 				view += "|"
 			default:
 				view += " "
 			}
+		}
 
-			// After the last column of a row a newline should be added.
-			if column == m.width-1 && row != m.height-1 {
-				view += "\n"
-			}
+		switch row {
+		case 1:
+			view += fmt.Sprintf(" Current score: %d", m.score)
+		case 2:
+			view += fmt.Sprintf(" Highscore:     %d", m.highscore)
+		case 4:
+			view += fmt.Sprintf(" Cursor pos:   (%v, %v)", m.cursor[0].Current(), m.cursor[1].Current())
+		case 5:
+			view += fmt.Sprintf(" Point pos:    %v", m.pointPosition)
+		}
+
+		if row != height-1 {
+			view += "\n"
 		}
 	}
 

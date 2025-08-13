@@ -7,8 +7,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/gweppi/ssh-snake/iterator"
+
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gweppi/term-testing/iterator"
 )
 
 const (
@@ -187,9 +188,9 @@ func (m model) View() string {
 		case 2:
 			view += fmt.Sprintf(" Highscore:     %d", m.highscore)
 		case 4:
-			view += fmt.Sprintf(" Cursor pos:   (%v, %v)", m.cursor[0].Current(), m.cursor[1].Current())
+			view += fmt.Sprintf(" Cursor pos:    (%v, %v)", m.cursor[0].Current(), m.cursor[1].Current())
 		case 5:
-			view += fmt.Sprintf(" Point pos:    %v", m.pointPosition)
+			view += fmt.Sprintf(" Point pos:     %v", m.pointPosition)
 		}
 
 		if row != height-1 {

@@ -1,4 +1,4 @@
-module github.com/gweppi/term-testing
+module github.com/gweppi/ssh-snake
 
 go 1.24.3
 

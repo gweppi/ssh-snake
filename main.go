@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gweppi/term-testing/app"
+import "github.com/gweppi/ssh-snake/app"
 
 func main() {
 	app.App()

@@ -1,7 +1,7 @@
 package main
 
-import "github.com/gweppi/ssh-snake/app"
+import "github.com/gweppi/ssh-snake/game"
 
 func main() {
-	app.App()
+	game.Start()
 }

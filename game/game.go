@@ -1,4 +1,4 @@
-package app
+package game
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ const (
 	height = 10
 )
 
-func App() {
+func Start() {
 	// Load terminal program with initial model
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
@@ -49,13 +49,11 @@ type model struct {
 }
 
 func initialModel() model {
-	width := 25
 	legalHorizontalPositions := make([]int, width-2)
 	for i := range legalHorizontalPositions {
 		legalHorizontalPositions[i] = i + 1
 	}
 
-	height := 10
 	legalVerticalPositions := make([]int, height-2)
 	for i := range legalVerticalPositions {
 		legalVerticalPositions[i] = i + 1
@@ -113,19 +111,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Application can be quit by either q or ctrl+c keypress
 		case "q", "ctrl+c":
 			return m, tea.Quit
-		case "up":
+		case "up", "w":
 			if m.direction != down {
 				m.direction = up
 			}
-		case "down":
+		case "down", "s":
 			if m.direction != up {
 				m.direction = down
 			}
-		case "left":
+		case "left", "a":
 			if m.direction != right {
 				m.direction = left
 			}
-		case "right":
+		case "right", "d":
 			if m.direction != left {
 				m.direction = right
 			}

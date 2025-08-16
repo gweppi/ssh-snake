@@ -146,6 +146,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.body.shift(prevPos)
+
+		// Now that all the elements are in a new position, check if the snake interferes with itself
+		// If the slice of bodyparts contains the location of where the head should be, game over
+		if slices.Contains(m.body, m.cursor.position()) {
+			// Game over
+			return m, tea.Quit
+		}
+
 		return m, tick()
 	}
 

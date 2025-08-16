@@ -26,7 +26,7 @@ const (
 
 func Start() {
 	// Load terminal program with initial model
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(InitialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
@@ -39,7 +39,7 @@ type direction int
 type position [2]int
 type body []position
 
-type model struct {
+type AppModel struct {
 	score         int
 	highscore     int
 	pointPosition position
@@ -48,7 +48,7 @@ type model struct {
 	direction
 }
 
-func initialModel() model {
+func InitialModel() AppModel {
 	legalHorizontalPositions := make([]int, width-2)
 	for i := range legalHorizontalPositions {
 		legalHorizontalPositions[i] = i + 1
@@ -59,7 +59,7 @@ func initialModel() model {
 		legalVerticalPositions[i] = i + 1
 	}
 
-	return model{
+	return AppModel{
 		cursor: cursor{{
 			List: legalHorizontalPositions,
 		}, {
@@ -100,11 +100,11 @@ func tick() tea.Cmd {
 	})
 }
 
-func (m model) Init() tea.Cmd {
+func (m AppModel) Init() tea.Cmd {
 	return tick()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -147,8 +147,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.body.shift(prevPos)
 
-		// Now that all the elements are in a new position, check if the snake interferes with itself
-		// If the slice of bodyparts contains the location of where the head should be, game over
+		// Now that all elements are in their new positions, check if the snake collides with itself
+		// If the slice of body parts contains the location of where the head is, game over
 		if slices.Contains(m.body, m.cursor.position()) {
 			// Game over
 			return m, tea.Quit
@@ -168,7 +168,7 @@ func (b *body) shift(new position) {
 	}
 }
 
-func (m model) View() string {
+func (m AppModel) View() string {
 	view := ""
 	for row := range height {
 		for column := range width {

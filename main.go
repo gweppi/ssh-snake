@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	host = "localhost"
+	// Because this is going to be put in a Docker image, expose all interfaces
+	host = "0.0.0.0"
 	port = "23234"
 )
 

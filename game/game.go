@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	width  = 20
+	width  = 10
 	height = 10
 )
 
@@ -174,17 +174,23 @@ func (m AppModel) View() string {
 		for column := range width {
 			switch true {
 			case (m.cursor[0].Current() == column && m.cursor[1].Current() == row):
-				view += "o"
+				// Snake head
+				view += "\uFF2F" // Ｏ
 			case (m.pointPosition[0] == column && m.pointPosition[1] == row):
-				view += "."
+				// Point
+				view += "\uFF0A" // ＊
 			case (slices.Contains(m.body, position{column, row})):
-				view += "="
+				// Snake body
+				view += "\uFF4F" // ｏ
 			case (row == 0 || row == height-1):
-				view += "-"
+				// Upper and lower border
+				view += "\uFF1D" // ＝
 			case (column == 0 || column == width-1):
-				view += "|"
+				// Left and right border
+				view += "\uFF1D" // ＝
 			default:
-				view += " "
+				// Empty space, 2 spaces because all chars are full-width unicode
+				view += "  "
 			}
 		}
 

@@ -66,15 +66,23 @@ func InitialModel() AppModel {
 			List: legalVerticalPositions,
 		}},
 		direction:     down, // the default direction is down
-		pointPosition: randomPoint(),
+		pointPosition: AppModel{}.randomPoint(),
 		body:          make([]position, 0),
 	}
 }
 
-func randomPoint() position {
+func (m AppModel) randomPoint() position {
 	x := rand.Intn(width-2) + 1
 	y := rand.Intn(height-2) + 1
-	return position{x, y}
+	pos := position{x, y}
+
+	// If the randomly chosen coordinates are in the array of the body (so snake is on this coordinate) randomly generate another point
+	// This solves the problem of a point spawning in the body of the snake which makes it difficult to get the point.
+	if slices.Contains(m.body, pos) {
+		return m.randomPoint()
+	} else {
+		return position{x, y}
+	}
 }
 
 func (c *cursor) move(d direction) {
@@ -136,7 +144,7 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.pointPosition == m.cursor.position() {
 			m.score++
 			// Change point to other random point
-			m.pointPosition = randomPoint()
+			m.pointPosition = m.randomPoint()
 
 			if m.score > m.highscore {
 				m.highscore++

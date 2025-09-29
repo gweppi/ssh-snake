@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"slices"
 	"time"
 
@@ -24,22 +23,13 @@ const (
 	height = 10
 )
 
-func Start() {
-	// Load terminal program with initial model
-	p := tea.NewProgram(InitialModel())
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
-		os.Exit(1)
-	}
-}
-
 type tickMsg time.Time
 type cursor [2]iterator.Iterator[int]
 type direction int
 type position [2]int
 type body []position
 
-type AppModel struct {
+type appModel struct {
 	score         int
 	highscore     int
 	pointPosition position
@@ -48,7 +38,7 @@ type AppModel struct {
 	direction
 }
 
-func InitialModel() AppModel {
+func InitialModel() appModel {
 	legalHorizontalPositions := make([]int, width-2)
 	for i := range legalHorizontalPositions {
 		legalHorizontalPositions[i] = i + 1
@@ -59,26 +49,26 @@ func InitialModel() AppModel {
 		legalVerticalPositions[i] = i + 1
 	}
 
-	return AppModel{
+	return appModel{
 		cursor: cursor{{
 			List: legalHorizontalPositions,
 		}, {
 			List: legalVerticalPositions,
 		}},
 		direction:     down, // the default direction is down
-		pointPosition: AppModel{}.randomPoint(),
+		pointPosition: appModel{}.randomPoint(),
 		body:          make([]position, 0),
 	}
 }
 
-func (m AppModel) randomPoint() position {
+func (m appModel) randomPoint() position {
 	x := rand.Intn(width-2) + 1
 	y := rand.Intn(height-2) + 1
 	pos := position{x, y}
 
 	// If the randomly chosen coordinates are in the array of the body (so snake is on this coordinate) randomly generate another point
 	// This solves the problem of a point spawning in the body of the snake which makes it difficult to get the point.
-	if slices.Contains(m.body, pos) {
+	if slices.Contains(m.body, pos) || pos == m.cursor.position() {
 		return m.randomPoint()
 	} else {
 		return position{x, y}
@@ -99,6 +89,9 @@ func (c *cursor) move(d direction) {
 }
 
 func (c *cursor) position() position {
+	if len((c[0].List)) == 0 || len(c[1].List) == 0 {
+		return position{1, 1}
+	}
 	return position{c[0].Current(), c[1].Current()}
 }
 
@@ -108,11 +101,11 @@ func tick() tea.Cmd {
 	})
 }
 
-func (m AppModel) Init() tea.Cmd {
+func (m appModel) Init() tea.Cmd {
 	return tick()
 }
 
-func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -140,6 +133,8 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		prevPos := m.cursor.position()
 		m.cursor.move(m.direction)
 
+		m.body.shift(prevPos)
+
 		// Head is on point, so up score and increase snake length
 		if m.pointPosition == m.cursor.position() {
 			m.score++
@@ -152,8 +147,6 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.body = append(m.body, prevPos)
 		}
-
-		m.body.shift(prevPos)
 
 		// Now that all elements are in their new positions, check if the snake collides with itself
 		// If the slice of body parts contains the location of where the head is, game over
@@ -176,7 +169,7 @@ func (b *body) shift(new position) {
 	}
 }
 
-func (m AppModel) View() string {
+func (m appModel) View() string {
 	view := ""
 	for row := range height {
 		for column := range width {
